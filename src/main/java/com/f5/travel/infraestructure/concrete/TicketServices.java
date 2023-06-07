@@ -7,6 +7,7 @@ import com.f5.travel.domain.entities.TicketEntity;
 import com.f5.travel.domain.repositories.CustomerRepository;
 import com.f5.travel.domain.repositories.FlyRepository;
 import com.f5.travel.domain.repositories.TicketRepository;
+import com.f5.travel.infraestructure.BlackListHelper;
 import com.f5.travel.infraestructure.abstracts.ITickets;
 import com.f5.travel.util.exceptions.IdNotFoundException;
 import lombok.AllArgsConstructor;
@@ -28,12 +29,13 @@ public class TicketServices implements ITickets {
   private final FlyRepository _fly;
   private final CustomerRepository _customer;
   private final TicketRepository _ticket;
+  private BlackListHelper _blackListHelper;
 
   private static final BigDecimal charge_price_percentage = BigDecimal.valueOf(0.25);
 
   @Override
   public TicketResponse create(TicketRequest request) {
-
+  _blackListHelper.isInBlackListCustomer(request.getIdClient());
     var fly = _fly.findById(request.getIdFly()).orElseThrow(()-> new IdNotFoundException("fly"));
     var customer = _customer.findById(request.getIdClient()).orElseThrow(()-> new IdNotFoundException("customer"));
     var ticketToPersist = TicketEntity.builder()

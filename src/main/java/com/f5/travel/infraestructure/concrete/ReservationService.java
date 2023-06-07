@@ -7,8 +7,11 @@ import com.f5.travel.domain.entities.ReservationEntity;
 import com.f5.travel.domain.repositories.CustomerRepository;
 import com.f5.travel.domain.repositories.HotelRepository;
 import com.f5.travel.domain.repositories.ReservationRepository;
+import com.f5.travel.infraestructure.ApiCurrencyConnectorHelper;
+import com.f5.travel.infraestructure.BlackListHelper;
 import com.f5.travel.infraestructure.abstracts.IReservation;
 import com.f5.travel.util.exceptions.IdNotFoundException;
+import java.util.Currency;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
@@ -25,14 +28,19 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 public class ReservationService implements IReservation {
 
-  private HotelRepository _hotel;
-  private CustomerRepository _customer;
-  private ReservationRepository _reservation;
+  private final HotelRepository _hotel;
+  private final CustomerRepository _customer;
+  private final ReservationRepository _reservation;
+  private final BlackListHelper _blackListHelper;
+  private final ApiCurrencyConnectorHelper _apiCurrency;
+
   private static final BigDecimal charge_price_percentage = BigDecimal.valueOf(0.2);
+
 
 
   @Override
   public ReservationResponse create(ReservationRequest request) {
+    _blackListHelper.isInBlackListCustomer(request.getIdClient());
     var hotel = _hotel.findById(request.getIdHotel()).orElseThrow(()-> new IdNotFoundException("hotel"));
     var customer = _customer.findById(request.getIdClient()).orElseThrow(()-> new IdNotFoundException("customer"));
 
@@ -89,5 +97,15 @@ public class ReservationService implements IReservation {
     reservationResponse.set_hotel(hotelResponse);
 
     return reservationResponse;
+  }
+
+  @Override
+  public BigDecimal findPrice(Integer hotelId, Currency currency) {
+    var hotel = _hotel.findById(hotelId).orElseThrow(()-> new IdNotFoundException("hotel"));
+    var priceInDollars = hotel.getPrice().add(hotel.getPrice().multiply(charge_price_percentage));
+    if(currency.equals(Currency.getInstance("USD"))) return priceInDollars;
+    var currencyDto = _apiCurrency.getCurrency(currency);
+    // log.info("API CURRENCY WORKS IN {}, WITH CONVERTION VALUE: {}", currencyDto.getExchangeDate().toString(), currencyDto.getRates().toString());
+    return null;//priceInDollars.multiply(currencyDto.getRates().get(currency));
   }
 }

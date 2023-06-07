@@ -1,20 +1,21 @@
 package com.f5.travel.api.models.responses;
 
 
+import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 
-// Cuando son clases abstractas se usa el SuperBuilder
+
+@EqualsAndHashCode(callSuper = true)
 @SuperBuilder
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class BaseErrorResponse{
+public class ErrorsResponse extends BaseErrorResponse{
 
-  private String status;
-  private Integer code;
-
+  private List<String> errors;
 
 }
