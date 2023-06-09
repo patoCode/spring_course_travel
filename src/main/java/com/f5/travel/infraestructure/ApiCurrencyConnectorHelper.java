@@ -2,6 +2,7 @@ package com.f5.travel.infraestructure;
 
 
 import com.f5.travel.infraestructure.dto.CurrencyDTO;
+import java.time.Duration;
 import java.util.Currency;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
@@ -15,13 +16,13 @@ import reactor.core.publisher.Mono;
 
 
 @Component
-@Slf4j
-@Data
 public class ApiCurrencyConnectorHelper {
 
   public static final String SYMBOL_CURRENCY_QUERY_PARAM = "symbols";
   public static final String BASE_CURRENCY_QUERY_PARAM = "base";
-  public static final String CURRENCY_PATH = "/exchangerates_data/lastest";
+  public static final String CURRENCY_PATH = "/exchangerates_data/latest";
+
+  private static final Duration REQUEST_TIMEOUT = Duration.ofSeconds(3);
 
   private final WebClient _currencyWebClient;
 
@@ -29,12 +30,11 @@ public class ApiCurrencyConnectorHelper {
   private String baseCurrency;
 
   public ApiCurrencyConnectorHelper(@Qualifier("currency") WebClient currencyWebClient) {
-    _currencyWebClient = currencyWebClient;
+    this._currencyWebClient = currencyWebClient;
   }
 
   public CurrencyDTO getCurrency(Currency currency){
-    try {
-      Mono<Object[]> response = this._currencyWebClient
+    return this._currencyWebClient
           .get()
           .uri(
               uriBuilder -> uriBuilder
@@ -43,15 +43,8 @@ public class ApiCurrencyConnectorHelper {
                   .queryParam(BASE_CURRENCY_QUERY_PARAM, baseCurrency)
                   .build()
           )
-          .accept(MediaType.APPLICATION_JSON)
           .retrieve()
-          .bodyToMono(Object[].class).log();
-      Object[] objects = response.block();
-      log.info("SALIDA "+objects.toString());
-      return null;
-    } catch(WebClientResponseException e){
-      log.info("ERROR!!!!!!!!!!!!!! "+e.getMessage());
-      return null;
-    }
+          .bodyToMono(CurrencyDTO.class)
+          .block(REQUEST_TIMEOUT);
   }
 }

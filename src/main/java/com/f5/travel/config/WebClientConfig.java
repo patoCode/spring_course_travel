@@ -18,6 +18,8 @@ public class WebClientConfig {
   @Value(value = "${API_KEY.HEADER}")
   private String apiHeader;
 
+
+
   @Bean(name = "currency")
   public WebClient currencyWebClient(){
     return WebClient.builder()
@@ -43,7 +45,7 @@ public class WebClientConfig {
   private void addDefaultHeaders(final HttpHeaders headers) {
     headers.add(HttpHeaders.CONTENT_TYPE, "application/json");
     headers.add(HttpHeaders.ACCEPT, "application/json");
-    headers.add(this.apiHeader, this.apiKey);
+    headers.add("apikey", "YRwK8dP3ZLzxJNpeo1PIkj6JPPm386T3");
   }
 
 }
